@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Testimonial } from '@/types/supabase';
+import { Testimonial, asTestimonials } from '@/types/supabase';
 
 // Sample data for demonstration
 const mockUsers = [
@@ -15,6 +14,13 @@ const mockUsers = [
   { id: 2, name: 'David Chen', email: 'david.c@example.com', university: 'Metro State University', joinDate: '2025-02-03' },
   { id: 3, name: 'Maya Patel', email: 'maya.p@example.com', university: 'City College', joinDate: '2025-02-28' },
   { id: 4, name: 'James Wilson', email: 'james.w@example.com', university: 'Technical University', joinDate: '2025-03-10' },
+];
+
+const mockOrders = [
+  { id: "ORD-001", customer: "Sarah Johnson", service: "CV Writing", status: "completed", deadline: "2025-03-15" },
+  { id: "ORD-002", customer: "David Chen", service: "Portfolio Website", status: "in-progress", deadline: "2025-04-10" },
+  { id: "ORD-003", customer: "Maya Patel", service: "Combo Package", status: "pending", deadline: "2025-04-20" },
+  { id: "ORD-004", customer: "James Wilson", service: "CV Writing", status: "in-progress", deadline: "2025-04-05" },
 ];
 
 const mockAnalytics = {
@@ -59,7 +65,7 @@ const Admin = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setTestimonials(data || []);
+        setTestimonials(asTestimonials(data || []));
       } catch (error: any) {
         toast.error('Failed to load testimonials: ' + error.message);
       } finally {

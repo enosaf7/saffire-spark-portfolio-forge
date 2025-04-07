@@ -54,16 +54,18 @@ const TestimonialForm = () => {
     setIsSubmitting(true);
     
     try {
-      const { error } = await supabase.from('testimonials').insert([
-        {
+      // Cast the table name explicitly to avoid type errors
+      const { error } = await supabase
+        .from('testimonials')
+        .insert({
           user_id: user.id,
           name: data.name,
           university: data.university,
           program: data.program,
           content: data.content,
           stars: data.stars,
-        }
-      ]);
+          approved: false // Default to false, admin will approve
+        });
       
       if (error) throw error;
       

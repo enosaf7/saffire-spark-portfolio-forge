@@ -20,3 +20,12 @@ export type Testimonial = {
   created_at: string;
   approved: boolean;
 }
+
+// Type assertion helper for Supabase
+export const asTestimonial = (data: any): Testimonial => {
+  return data as Testimonial;
+};
+
+export const asTestimonials = (data: any): Testimonial[] => {
+  return data as Testimonial[];
+};

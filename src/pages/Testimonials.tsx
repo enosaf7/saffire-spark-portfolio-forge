@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Testimonial } from '@/types/supabase';
+import { Testimonial, asTestimonials } from '@/types/supabase';
 import Navbar from '@/components/ui/layout/Navbar';
 import Footer from '@/components/ui/layout/Footer';
 import TestimonialForm from '@/components/testimonials/TestimonialForm';
@@ -24,7 +24,7 @@ const Testimonials = () => {
           .order('created_at', { ascending: false });
         
         if (error) throw error;
-        setTestimonials(data || []);
+        setTestimonials(asTestimonials(data || []));
       } catch (error) {
         console.error('Error fetching testimonials:', error);
       } finally {

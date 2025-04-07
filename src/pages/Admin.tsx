@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,39 +7,41 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Testimonial, asTestimonials } from '@/types/supabase';
-
-const mockUsers = [
-  { id: 1, name: 'Sarah Johnson', email: 'sarah.j@example.com', university: 'University of Technology', joinDate: '2025-01-15' },
-  { id: 2, name: 'David Chen', email: 'david.c@example.com', university: 'Metro State University', joinDate: '2025-02-03' },
-  { id: 3, name: 'Maya Patel', email: 'maya.p@example.com', university: 'City College', joinDate: '2025-02-28' },
-  { id: 4, name: 'James Wilson', email: 'james.w@example.com', university: 'Technical University', joinDate: '2025-03-10' },
-];
-
-const mockOrders = [
-  { id: "ORD-001", customer: "Sarah Johnson", service: "CV Writing", status: "completed", deadline: "2025-03-15" },
-  { id: "ORD-002", customer: "David Chen", service: "Portfolio Website", status: "in-progress", deadline: "2025-04-10" },
-  { id: "ORD-003", customer: "Maya Patel", service: "Combo Package", status: "pending", deadline: "2025-04-20" },
-  { id: "ORD-004", customer: "James Wilson", service: "CV Writing", status: "in-progress", deadline: "2025-04-05" },
-];
-
-const mockAnalytics = {
-  visitors: 358,
-  newUsers: 42,
-  orders: {
-    total: 27,
-    pending: 8,
-    inProgress: 12,
-    completed: 7
-  },
-  conversionRate: '11.7%',
-  popularService: 'CV Writing'
-};
+import { 
+  Testimonial, 
+  asTestimonials, 
+  Profile, 
+  asProfiles, 
+  Order, 
+  asOrders 
+} from '@/types/supabase';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const Admin = () => {
   const navigate = useNavigate();
   const { user, isAdmin, hasAdminAccess, signOut } = useAuth();
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [analytics, setAnalytics] = useState({
+    visitors: 0,
+    newUsers: 0,
+    orders: {
+      total: 0,
+      pending: 0,
+      inProgress: 0,
+      completed: 0
+    },
+    conversionRate: '0%',
+    popularService: ''
+  });
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
@@ -54,23 +57,93 @@ const Admin = () => {
       return;
     }
 
-    const fetchTestimonials = async () => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const { data, error } = await supabase
+        // Fetch testimonials
+        const { data: testimonialData, error: testimonialError } = await supabase
           .from('testimonials')
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        setTestimonials(asTestimonials(data || []));
+        if (testimonialError) throw testimonialError;
+        setTestimonials(asTestimonials(testimonialData || []));
+
+        // Fetch profiles/users
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (profileError) throw profileError;
+        setUsers(asProfiles(profileData || []));
+
+        // Fetch orders - if orders table exists
+        try {
+          const { data: orderData, error: orderError } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (!orderError) {
+            setOrders(asOrders(orderData || []));
+            
+            // Calculate analytics based on real data
+            const total = orderData?.length || 0;
+            const pending = orderData?.filter(order => order.status === 'pending').length || 0;
+            const inProgress = orderData?.filter(order => order.status === 'in-progress').length || 0;
+            const completed = orderData?.filter(order => order.status === 'completed').length || 0;
+            
+            // Find most popular service
+            const services = orderData?.map(order => order.service) || [];
+            const serviceCounts = services.reduce((acc: Record<string, number>, service) => {
+              acc[service] = (acc[service] || 0) + 1;
+              return acc;
+            }, {});
+            
+            const popularService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'CV Writing';
+            
+            setAnalytics({
+              visitors: Math.floor(Math.random() * 300) + 200, // Random for now
+              newUsers: users.length,
+              orders: {
+                total,
+                pending,
+                inProgress,
+                completed
+              },
+              conversionRate: total > 0 ? `${((total / (Math.floor(Math.random() * 300) + 200)) * 100).toFixed(1)}%` : '0%',
+              popularService
+            });
+          } else {
+            // If orders table doesn't exist yet, use mock analytics
+            setOrders([]);
+            setAnalytics({
+              visitors: Math.floor(Math.random() * 300) + 200,
+              newUsers: users.length,
+              orders: {
+                total: 0,
+                pending: 0,
+                inProgress: 0,
+                completed: 0
+              },
+              conversionRate: '0%',
+              popularService: 'CV Writing'
+            });
+          }
+        } catch (err) {
+          console.error('Orders table might not exist yet:', err);
+          // Fallback to empty orders if table doesn't exist
+          setOrders([]);
+        }
       } catch (error: any) {
-        toast.error('Failed to load testimonials: ' + error.message);
+        toast.error('Failed to load data: ' + error.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTestimonials();
+    fetchData();
   }, [user, isAdmin, hasAdminAccess, navigate]);
 
   const handleLogout = async () => {
@@ -152,28 +225,28 @@ const Admin = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-4 flex flex-col items-center">
-              <div className="text-4xl font-bold text-saffire-blue">{mockAnalytics.visitors}</div>
+              <div className="text-4xl font-bold text-saffire-blue">{analytics.visitors}</div>
               <p className="text-gray-600">Total Visitors</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="p-4 flex flex-col items-center">
-              <div className="text-4xl font-bold text-saffire-purple">{mockAnalytics.orders.total}</div>
+              <div className="text-4xl font-bold text-saffire-purple">{analytics.orders.total}</div>
               <p className="text-gray-600">Total Orders</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="p-4 flex flex-col items-center">
-              <div className="text-4xl font-bold text-saffire-blue">{mockUsers.length}</div>
+              <div className="text-4xl font-bold text-saffire-blue">{users.length}</div>
               <p className="text-gray-600">Registered Users</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="p-4 flex flex-col items-center">
-              <div className="text-4xl font-bold text-saffire-purple">{mockAnalytics.conversionRate}</div>
+              <div className="text-4xl font-bold text-saffire-purple">{analytics.conversionRate}</div>
               <p className="text-gray-600">Conversion Rate</p>
             </CardContent>
           </Card>
@@ -194,26 +267,26 @@ const Admin = () => {
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="px-4 py-2 text-left">Name</th>
-                        <th className="px-4 py-2 text-left">University</th>
-                        <th className="px-4 py-2 text-left">Program</th>
-                        <th className="px-4 py-2 text-left">Stars</th>
-                        <th className="px-4 py-2 text-left">Status</th>
-                        <th className="px-4 py-2 text-left">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>University</TableHead>
+                        <TableHead>Program</TableHead>
+                        <TableHead>Stars</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {testimonials.length > 0 ? (
                         testimonials.map((testimonial) => (
-                          <tr key={testimonial.id} className="border-t">
-                            <td className="px-4 py-3">{testimonial.name}</td>
-                            <td className="px-4 py-3">{testimonial.university}</td>
-                            <td className="px-4 py-3">{testimonial.program}</td>
-                            <td className="px-4 py-3">{testimonial.stars} ⭐</td>
-                            <td className="px-4 py-3">
+                          <TableRow key={testimonial.id}>
+                            <TableCell>{testimonial.name}</TableCell>
+                            <TableCell>{testimonial.university}</TableCell>
+                            <TableCell>{testimonial.program}</TableCell>
+                            <TableCell>{testimonial.stars} ⭐</TableCell>
+                            <TableCell>
                               <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
                                 testimonial.approved
                                   ? 'bg-green-100 text-green-800'
@@ -221,8 +294,8 @@ const Admin = () => {
                               }`}>
                                 {testimonial.approved ? 'Approved' : 'Pending'}
                               </span>
-                            </td>
-                            <td className="px-4 py-3 flex space-x-2">
+                            </TableCell>
+                            <TableCell className="flex space-x-2">
                               {!testimonial.approved && (
                                 <>
                                   <Button 
@@ -253,18 +326,18 @@ const Admin = () => {
                                   Remove
                                 </Button>
                               )}
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ))
                       ) : (
-                        <tr>
-                          <td colSpan={6} className="px-4 py-3 text-center text-gray-500">
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-gray-500">
                             No testimonials found
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       )}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
@@ -273,50 +346,58 @@ const Admin = () => {
           <TabsContent value="orders" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
+                <CardTitle>Orders</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="px-4 py-2 text-left">Order ID</th>
-                        <th className="px-4 py-2 text-left">Customer</th>
-                        <th className="px-4 py-2 text-left">Service</th>
-                        <th className="px-4 py-2 text-left">Status</th>
-                        <th className="px-4 py-2 text-left">Deadline</th>
-                        <th className="px-4 py-2 text-left">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {mockOrders.map((order) => (
-                        <tr key={order.id} className="border-t">
-                          <td className="px-4 py-3">{order.id}</td>
-                          <td className="px-4 py-3">{order.customer}</td>
-                          <td className="px-4 py-3">{order.service}</td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                              order.status === 'completed' 
-                                ? 'bg-green-100 text-green-800' 
-                                : order.status === 'in-progress'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {order.status === 'completed' 
-                                ? 'Completed' 
-                                : order.status === 'in-progress'
-                                ? 'In Progress'
-                                : 'Pending'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">{order.deadline}</td>
-                          <td className="px-4 py-3">
-                            <Button variant="outline" size="sm">View</Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Service</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Deadline</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {orders.length > 0 ? (
+                        orders.map((order) => (
+                          <TableRow key={order.id}>
+                            <TableCell>{order.id.substring(0, 8)}</TableCell>
+                            <TableCell>{order.customer_name}</TableCell>
+                            <TableCell>{order.service}</TableCell>
+                            <TableCell>
+                              <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                                order.status === 'completed' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : order.status === 'in-progress'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {order.status === 'completed' 
+                                  ? 'Completed' 
+                                  : order.status === 'in-progress'
+                                  ? 'In Progress'
+                                  : 'Pending'}
+                              </span>
+                            </TableCell>
+                            <TableCell>{new Date(order.deadline).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              <Button variant="outline" size="sm">View</Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-gray-500">
+                            No orders found. Please add the orders table to Supabase to see real orders.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
@@ -329,30 +410,36 @@ const Admin = () => {
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="px-4 py-2 text-left">Name</th>
-                        <th className="px-4 py-2 text-left">Email</th>
-                        <th className="px-4 py-2 text-left">University</th>
-                        <th className="px-4 py-2 text-left">Join Date</th>
-                        <th className="px-4 py-2 text-left">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {mockUsers.map((user) => (
-                        <tr key={user.id} className="border-t">
-                          <td className="px-4 py-3">{user.name}</td>
-                          <td className="px-4 py-3">{user.email}</td>
-                          <td className="px-4 py-3">{user.university}</td>
-                          <td className="px-4 py-3">{user.joinDate}</td>
-                          <td className="px-4 py-3">
-                            <Button variant="outline" size="sm">View</Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>University</TableHead>
+                        <TableHead>Join Date</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.length > 0 ? (
+                        users.map((profile) => (
+                          <TableRow key={profile.id}>
+                            <TableCell>{profile.full_name || 'No name'}</TableCell>
+                            <TableCell>{profile.university || 'Not specified'}</TableCell>
+                            <TableCell>{new Date(profile.created_at).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              <Button variant="outline" size="sm">View</Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-gray-500">
+                            No users found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
@@ -366,15 +453,15 @@ const Admin = () => {
               <CardContent className="p-6">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div className="p-4 bg-yellow-50 rounded-lg">
-                    <div className="text-3xl font-bold text-yellow-600">{mockAnalytics.orders.pending}</div>
+                    <div className="text-3xl font-bold text-yellow-600">{analytics.orders.pending}</div>
                     <p className="text-gray-600">Pending</p>
                   </div>
                   <div className="p-4 bg-blue-50 rounded-lg">
-                    <div className="text-3xl font-bold text-blue-600">{mockAnalytics.orders.inProgress}</div>
+                    <div className="text-3xl font-bold text-blue-600">{analytics.orders.inProgress}</div>
                     <p className="text-gray-600">In Progress</p>
                   </div>
                   <div className="p-4 bg-green-50 rounded-lg">
-                    <div className="text-3xl font-bold text-green-600">{mockAnalytics.orders.completed}</div>
+                    <div className="text-3xl font-bold text-green-600">{analytics.orders.completed}</div>
                     <p className="text-gray-600">Completed</p>
                   </div>
                 </div>
@@ -386,7 +473,7 @@ const Admin = () => {
                 <CardTitle>Service Popularity</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <p className="text-gray-700">Most popular service: <strong>{mockAnalytics.popularService}</strong></p>
+                <p className="text-gray-700">Most popular service: <strong>{analytics.popularService}</strong></p>
                 <div className="mt-4">
                   <div className="mb-2 flex justify-between">
                     <span>CV Writing</span>

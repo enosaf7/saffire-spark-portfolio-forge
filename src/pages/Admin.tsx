@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Testimonial } from '@/types/supabase';
 
 // Sample data for demonstration
 const mockUsers = [
@@ -12,13 +15,6 @@ const mockUsers = [
   { id: 2, name: 'David Chen', email: 'david.c@example.com', university: 'Metro State University', joinDate: '2025-02-03' },
   { id: 3, name: 'Maya Patel', email: 'maya.p@example.com', university: 'City College', joinDate: '2025-02-28' },
   { id: 4, name: 'James Wilson', email: 'james.w@example.com', university: 'Technical University', joinDate: '2025-03-10' },
-];
-
-const mockOrders = [
-  { id: 'ORD-001', customer: 'Sarah Johnson', service: 'CV Writing', status: 'completed', deadline: '2025-03-15' },
-  { id: 'ORD-002', customer: 'David Chen', service: 'Portfolio Website', status: 'in-progress', deadline: '2025-04-10' },
-  { id: 'ORD-003', customer: 'Maya Patel', service: 'Combo Package', status: 'pending', deadline: '2025-04-20' },
-  { id: 'ORD-004', customer: 'James Wilson', service: 'CV Writing', status: 'pending', deadline: '2025-05-01' },
 ];
 
 const mockAnalytics = {
@@ -36,44 +32,98 @@ const mockAnalytics = {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { user, isAdmin, signOut } = useAuth();
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Simple admin check - in a real app, this would be handled by an authentication system
-    const checkAdmin = () => {
-      // Simulate admin check - in a real app, this would verify the user's role
-      const isUserAdmin = localStorage.getItem('isAdmin') === 'true';
-      
-      if (!isUserAdmin) {
-        toast.error('Unauthorized access. Please login as admin.');
-        navigate('/login');
-      } else {
-        setIsAdmin(true);
+    // Check if user is authenticated and is admin
+    if (!user) {
+      toast.error('Please login to access this page');
+      navigate('/login');
+      return;
+    }
+
+    if (!isAdmin) {
+      toast.error('You do not have permission to access this page');
+      navigate('/');
+      return;
+    }
+
+    // Fetch testimonials
+    const fetchTestimonials = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('testimonials')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setTestimonials(data || []);
+      } catch (error: any) {
+        toast.error('Failed to load testimonials: ' + error.message);
+      } finally {
+        setLoading(false);
       }
     };
-    
-    // Set a timeout to simulate checking authentication
-    const timeout = setTimeout(() => {
-      // For demo purposes, we'll set the user as admin
-      localStorage.setItem('isAdmin', 'true');
-      checkAdmin();
-    }, 500);
-    
-    return () => clearTimeout(timeout);
-  }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAdmin');
+    fetchTestimonials();
+  }, [user, isAdmin, navigate]);
+
+  const handleLogout = async () => {
+    await signOut();
     toast.success('Logged out successfully');
     navigate('/login');
   };
 
-  if (!isAdmin) {
+  const handleApproveTestimonial = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('testimonials')
+        .update({ approved: true })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      // Update local state
+      setTestimonials(prevTestimonials => 
+        prevTestimonials.map(testimonial => 
+          testimonial.id === id ? {...testimonial, approved: true} : testimonial
+        )
+      );
+      
+      toast.success('Testimonial approved successfully');
+    } catch (error: any) {
+      toast.error('Failed to approve testimonial: ' + error.message);
+    }
+  };
+
+  const handleRejectTestimonial = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('testimonials')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      // Update local state
+      setTestimonials(prevTestimonials => 
+        prevTestimonials.filter(testimonial => testimonial.id !== id)
+      );
+      
+      toast.success('Testimonial rejected');
+    } catch (error: any) {
+      toast.error('Failed to reject testimonial: ' + error.message);
+    }
+  };
+
+  if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-t-saffire-blue border-gray-200 mb-4"></div>
-          <p className="text-gray-600">Verifying administrator access...</p>
+          <p className="text-gray-600">Loading admin dashboard...</p>
         </div>
       </div>
     );
@@ -128,12 +178,96 @@ const Admin = () => {
           </Card>
         </div>
         
-        <Tabs defaultValue="orders" className="space-y-6">
+        <Tabs defaultValue="testimonials" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="testimonials" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Testimonials Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="px-4 py-2 text-left">Name</th>
+                        <th className="px-4 py-2 text-left">University</th>
+                        <th className="px-4 py-2 text-left">Program</th>
+                        <th className="px-4 py-2 text-left">Stars</th>
+                        <th className="px-4 py-2 text-left">Status</th>
+                        <th className="px-4 py-2 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {testimonials.length > 0 ? (
+                        testimonials.map((testimonial) => (
+                          <tr key={testimonial.id} className="border-t">
+                            <td className="px-4 py-3">{testimonial.name}</td>
+                            <td className="px-4 py-3">{testimonial.university}</td>
+                            <td className="px-4 py-3">{testimonial.program}</td>
+                            <td className="px-4 py-3">{testimonial.stars} ⭐</td>
+                            <td className="px-4 py-3">
+                              <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                                testimonial.approved
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {testimonial.approved ? 'Approved' : 'Pending'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 flex space-x-2">
+                              {!testimonial.approved && (
+                                <>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="bg-green-50 text-green-700 hover:bg-green-100"
+                                    onClick={() => handleApproveTestimonial(testimonial.id)}
+                                  >
+                                    Approve
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="bg-red-50 text-red-700 hover:bg-red-100"
+                                    onClick={() => handleRejectTestimonial(testimonial.id)}
+                                  >
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                              {testimonial.approved && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="bg-red-50 text-red-700 hover:bg-red-100"
+                                  onClick={() => handleRejectTestimonial(testimonial.id)}
+                                >
+                                  Remove
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-3 text-center text-gray-500">
+                            No testimonials found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
           
           <TabsContent value="orders" className="space-y-6">
             <Card>

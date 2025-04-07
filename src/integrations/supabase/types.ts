@@ -9,18 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      "saffire-tech1": {
+      profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
-          id: number
+          full_name: string | null
+          id: string
+          university: string | null
+          updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
-          id?: number
+          full_name?: string | null
+          id: string
+          university?: string | null
+          updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
-          id?: number
+          full_name?: string | null
+          id?: string
+          university?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      testimonials: {
+        Row: {
+          approved: boolean
+          content: string
+          created_at: string
+          id: string
+          name: string
+          program: string
+          stars: number
+          university: string
+          user_id: string
+        }
+        Insert: {
+          approved?: boolean
+          content: string
+          created_at?: string
+          id?: string
+          name: string
+          program: string
+          stars: number
+          university: string
+          user_id: string
+        }
+        Update: {
+          approved?: boolean
+          content?: string
+          created_at?: string
+          id?: string
+          name?: string
+          program?: string
+          stars?: number
+          university?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 const AuthForm = () => {
   const navigate = useNavigate();
+  const { signIn, signUp, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
   // Login form state
@@ -23,26 +25,31 @@ const AuthForm = () => {
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
   const [registerUniversity, setRegisterUniversity] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Redirect if user is already logged in
+  if (user) {
+    if (user.email === 'admin@saffire-tech.com') {
+      navigate('/admin');
+    } else {
+      navigate('/booking');
+    }
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate login authentication
-    setTimeout(() => {
-      if (loginEmail === 'admin@saffire-tech.com' && loginPassword === 'admin123') {
-        toast.success('Welcome back, Admin!');
-        navigate('/admin');
-      } else if (loginEmail && loginPassword) {
-        toast.success('Login successful!');
-        navigate('/booking');
-      } else {
-        toast.error('Invalid email or password');
-      }
-      setIsLoading(false);
-    }, 1500);
+    const { error } = await signIn(loginEmail, loginPassword);
+
+    if (error) {
+      toast.error(error.message || 'Login failed. Please try again.');
+    } else {
+      toast.success('Login successful!');
+      // Redirection will be handled by the useEffect in AuthProvider
+    }
+    setIsLoading(false);
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
@@ -52,22 +59,39 @@ const AuthForm = () => {
       setIsLoading(false);
       return;
     }
+
+    // Register with Supabase
+    const { error } = await signUp(
+      registerEmail, 
+      registerPassword, 
+      { 
+        full_name: registerName,
+        university: registerUniversity,
+      }
+    );
     
-    // Simulate registration
-    setTimeout(() => {
-      toast.success('Registration successful! Please log in.');
-      setIsLoading(false);
+    if (error) {
+      toast.error(error.message || 'Registration failed. Please try again.');
+    } else {
+      toast.success('Registration successful! Check your email for confirmation.');
       // Reset form
       setRegisterName('');
       setRegisterEmail('');
       setRegisterPassword('');
       setRegisterConfirmPassword('');
       setRegisterUniversity('');
-    }, 1500);
+    }
+    
+    setIsLoading(false);
   };
 
   const handleGuestAccess = () => {
     navigate('/booking?guest=true');
+  };
+
+  const handleAdminAccess = () => {
+    setLoginEmail('admin@saffire-tech.com');
+    setLoginPassword('admin123');
   };
 
   return (
@@ -198,7 +222,7 @@ const AuthForm = () => {
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex-col space-y-2">
           <Button
             variant="outline"
             className="w-full"
@@ -206,6 +230,15 @@ const AuthForm = () => {
           >
             Continue as Guest
           </Button>
+          <div className="text-center w-full">
+            <button 
+              type="button" 
+              className="text-xs text-gray-500 hover:text-gray-700 mt-4"
+              onClick={handleAdminAccess}
+            >
+              Admin Access
+            </button>
+          </div>
         </CardFooter>
       </Card>
     </div>

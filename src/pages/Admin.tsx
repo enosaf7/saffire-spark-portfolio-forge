@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,63 +77,47 @@ const Admin = () => {
         if (profileError) throw profileError;
         setUsers(asProfiles(profileData || []));
 
-        // Fetch orders - if orders table exists
-        try {
-          const { data: orderData, error: orderError } = await supabase
-            .from('orders')
-            .select('*')
-            .order('created_at', { ascending: false });
+        // Fetch orders from the orders table
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-          if (!orderError) {
-            setOrders(asOrders(orderData || []));
-            
-            // Calculate analytics based on real data
-            const total = orderData?.length || 0;
-            const pending = orderData?.filter(order => order.status === 'pending').length || 0;
-            const inProgress = orderData?.filter(order => order.status === 'in-progress').length || 0;
-            const completed = orderData?.filter(order => order.status === 'completed').length || 0;
-            
-            // Find most popular service
-            const services = orderData?.map(order => order.service) || [];
-            const serviceCounts = services.reduce((acc: Record<string, number>, service) => {
-              acc[service] = (acc[service] || 0) + 1;
-              return acc;
-            }, {});
-            
-            const popularService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'CV Writing';
-            
-            setAnalytics({
-              visitors: Math.floor(Math.random() * 300) + 200, // Random for now
-              newUsers: users.length,
-              orders: {
-                total,
-                pending,
-                inProgress,
-                completed
-              },
-              conversionRate: total > 0 ? `${((total / (Math.floor(Math.random() * 300) + 200)) * 100).toFixed(1)}%` : '0%',
-              popularService
-            });
-          } else {
-            // If orders table doesn't exist yet, use mock analytics
-            setOrders([]);
-            setAnalytics({
-              visitors: Math.floor(Math.random() * 300) + 200,
-              newUsers: users.length,
-              orders: {
-                total: 0,
-                pending: 0,
-                inProgress: 0,
-                completed: 0
-              },
-              conversionRate: '0%',
-              popularService: 'CV Writing'
-            });
-          }
-        } catch (err) {
-          console.error('Orders table might not exist yet:', err);
-          // Fallback to empty orders if table doesn't exist
+        if (orderError) {
+          console.error('Error fetching orders:', orderError);
           setOrders([]);
+        } else {
+          const typedOrders = asOrders(orderData || []);
+          setOrders(typedOrders);
+          
+          // Calculate analytics based on real data
+          const total = typedOrders.length || 0;
+          const pending = typedOrders.filter(order => order.status === 'pending').length || 0;
+          const inProgress = typedOrders.filter(order => order.status === 'in-progress').length || 0;
+          const completed = typedOrders.filter(order => order.status === 'completed').length || 0;
+          
+          // Find most popular service
+          const services = typedOrders.map(order => order.service) || [];
+          const serviceCounts = services.reduce((acc: Record<string, number>, service) => {
+            acc[service] = (acc[service] || 0) + 1;
+            return acc;
+          }, {});
+          
+          const popularService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'CV Writing';
+          const visitorCount = Math.floor(Math.random() * 300) + 200;
+          
+          setAnalytics({
+            visitors: visitorCount,
+            newUsers: users.length,
+            orders: {
+              total,
+              pending,
+              inProgress,
+              completed
+            },
+            conversionRate: visitorCount > 0 ? `${((total / visitorCount) * 100).toFixed(1)}%` : '0%',
+            popularService
+          });
         }
       } catch (error: any) {
         toast.error('Failed to load data: ' + error.message);
@@ -392,7 +375,7 @@ const Admin = () => {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={6} className="text-center text-gray-500">
-                            No orders found. Please add the orders table to Supabase to see real orders.
+                            No orders found
                           </TableCell>
                         </TableRow>
                       )}

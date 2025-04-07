@@ -8,7 +8,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Testimonial, asTestimonials } from '@/types/supabase';
 
-// Sample data for demonstration
 const mockUsers = [
   { id: 1, name: 'Sarah Johnson', email: 'sarah.j@example.com', university: 'University of Technology', joinDate: '2025-01-15' },
   { id: 2, name: 'David Chen', email: 'david.c@example.com', university: 'Metro State University', joinDate: '2025-02-03' },
@@ -38,25 +37,23 @@ const mockAnalytics = {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, hasAdminAccess, signOut } = useAuth();
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Check if user is authenticated and is admin
-    if (!user) {
+    if (!user && !hasAdminAccess) {
       toast.error('Please login to access this page');
       navigate('/login');
       return;
     }
 
-    if (!isAdmin) {
+    if (!isAdmin && !hasAdminAccess) {
       toast.error('You do not have permission to access this page');
       navigate('/');
       return;
     }
 
-    // Fetch testimonials
     const fetchTestimonials = async () => {
       try {
         const { data, error } = await supabase
@@ -74,7 +71,7 @@ const Admin = () => {
     };
 
     fetchTestimonials();
-  }, [user, isAdmin, navigate]);
+  }, [user, isAdmin, hasAdminAccess, navigate]);
 
   const handleLogout = async () => {
     await signOut();
@@ -91,7 +88,6 @@ const Admin = () => {
 
       if (error) throw error;
       
-      // Update local state
       setTestimonials(prevTestimonials => 
         prevTestimonials.map(testimonial => 
           testimonial.id === id ? {...testimonial, approved: true} : testimonial
@@ -113,7 +109,6 @@ const Admin = () => {
 
       if (error) throw error;
       
-      // Update local state
       setTestimonials(prevTestimonials => 
         prevTestimonials.filter(testimonial => testimonial.id !== id)
       );

@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InfoIcon } from 'lucide-react';
 
 const AuthForm = () => {
   const navigate = useNavigate();
@@ -90,8 +92,9 @@ const AuthForm = () => {
   };
 
   const handleAdminAccess = () => {
-    setLoginEmail('admin@saffire-tech.com');
-    setLoginPassword('admin123');
+    setLoginEmail('user@example.com'); // Can be any email
+    setLoginPassword('admin123'); // Special password that grants admin access
+    toast.info('Admin credentials entered. Click Sign In to access the admin dashboard.');
   };
 
   return (
@@ -104,6 +107,13 @@ const AuthForm = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-4">
+          <Alert className="mb-6 bg-blue-50 text-blue-800 border-blue-200">
+            <InfoIcon className="h-4 w-4" />
+            <AlertDescription>
+              For admin access, click the "Admin Access" button below and then "Sign In"
+            </AlertDescription>
+          </Alert>
+          
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Login</TabsTrigger>
@@ -233,7 +243,7 @@ const AuthForm = () => {
           <div className="text-center w-full">
             <button 
               type="button" 
-              className="text-xs text-gray-500 hover:text-gray-700 mt-4"
+              className="px-4 py-2 bg-saffire-purple text-white rounded text-sm mt-4 hover:bg-opacity-90"
               onClick={handleAdminAccess}
             >
               Admin Access

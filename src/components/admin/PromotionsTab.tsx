@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from "@/integrations/supabase/client";
@@ -138,9 +139,15 @@ const PromotionsTab = () => {
         return;
       }
 
+      // Ensure all required fields are present
       const promotionData = {
-        ...currentPromotion,
-        created_by: user.id
+        title: currentPromotion.title,
+        description: currentPromotion.description,
+        created_by: user.id,
+        image_url: currentPromotion.image_url || null,
+        target_url: currentPromotion.target_url || null,
+        active: currentPromotion.active === undefined ? true : currentPromotion.active,
+        priority: currentPromotion.priority || 0
       };
 
       let error;
@@ -162,9 +169,10 @@ const PromotionsTab = () => {
           toast.success('Promotion updated successfully');
         }
       } else {
+        // For new promotions, use a single object (not an array)
         const { error: insertError } = await supabase
           .from('promotions')
-          .insert([promotionData]);
+          .insert(promotionData);
           
         error = insertError;
         

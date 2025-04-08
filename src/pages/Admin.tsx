@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,8 +15,7 @@ import {
   Order, 
   asOrders,
   asVisitors,
-  Visitor,
-  asUsers
+  Visitor
 } from '@/types/supabase';
 import {
   Table,
@@ -32,7 +32,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const { user, isAdmin, hasAdminAccess, signOut } = useAuth();
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [analytics, setAnalytics] = useState({
@@ -74,14 +74,14 @@ const Admin = () => {
         if (testimonialError) throw testimonialError;
         setTestimonials(asTestimonials(testimonialData || []));
 
-        // Fetch users from our new users table
-        const { data: userData, error: userError } = await supabase
-          .from('users')
+        // Fetch profiles/users
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (userError) throw userError;
-        setUsers(asUsers(userData || []));
+        if (profileError) throw profileError;
+        setUsers(asProfiles(profileData || []));
         
         // Fetch visitors count
         const { data: visitorData, error: visitorError } = await supabase
@@ -221,8 +221,8 @@ const Admin = () => {
       <header className="bg-gray-900 text-white shadow-lg">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-saffire-blue to-saffire-purple flex items-center justify-center text-white">
-              <Gem className="h-6 w-6" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-saffire-blue to-saffire-purple flex items-center justify-center text-white font-bold text-xl">
+              S
             </div>
             <span className="font-heading font-bold text-xl">
               Saffire<span className="text-saffire-blue">Tech</span> <span className="text-sm font-normal">Admin</span>
@@ -429,30 +429,18 @@ const Admin = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
                         <TableHead>University</TableHead>
-                        <TableHead>Role</TableHead>
                         <TableHead>Join Date</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {users.length > 0 ? (
-                        users.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell>{user.full_name || 'No name'}</TableCell>
-                            <TableCell>{user.email || 'No email'}</TableCell>
-                            <TableCell>{user.university || 'Not specified'}</TableCell>
-                            <TableCell>
-                              <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                                user.role === 'admin' 
-                                  ? 'bg-purple-100 text-purple-800' 
-                                  : 'bg-blue-100 text-blue-800'
-                              }`}>
-                                {user.role || 'User'}
-                              </span>
-                            </TableCell>
-                            <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                        users.map((profile) => (
+                          <TableRow key={profile.id}>
+                            <TableCell>{profile.full_name || 'No name'}</TableCell>
+                            <TableCell>{profile.university || 'Not specified'}</TableCell>
+                            <TableCell>{new Date(profile.created_at).toLocaleDateString()}</TableCell>
                             <TableCell>
                               <Button variant="outline" size="sm">View</Button>
                             </TableCell>
@@ -460,7 +448,7 @@ const Admin = () => {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center text-gray-500">
+                          <TableCell colSpan={4} className="text-center text-gray-500">
                             No users found
                           </TableCell>
                         </TableRow>

@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 type AuthContextType = {
   session: Session | null;
   user: User | null;
-  userData: any | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
   signUp: (email: string, password: string, metadata: any) => Promise<{ error: any | null }>;
@@ -19,7 +18,6 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
-  userData: null,
   loading: true,
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
@@ -30,7 +28,6 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<any | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -51,31 +48,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user data from our users table
-          setTimeout(async () => {
-            try {
-              const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-                
-              if (error) throw error;
-              
-              setUserData(data);
-              const isActualAdmin = data?.role === 'admin';
-              setIsAdmin(isActualAdmin);
-              
-              if (isActualAdmin) {
-                setHasAdminAccess(true);
-                localStorage.setItem('temporaryAdminAccess', 'true');
-              }
-            } catch (error) {
-              console.error('Error fetching user data:', error);
-            }
-          }, 0);
+          const email = session.user.email;
+          const isActualAdmin = email === 'enosaf7@gmail.com';
+          setIsAdmin(isActualAdmin);
+          
+          if (isActualAdmin) {
+            setHasAdminAccess(true);
+            localStorage.setItem('temporaryAdminAccess', 'true');
+          }
         } else {
-          setUserData(null);
           setIsAdmin(false);
         }
       }
@@ -87,27 +68,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Fetch user data from our users table
-        supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data, error }) => {
-            if (error) {
-              console.error('Error fetching user data:', error);
-              return;
-            }
-            
-            setUserData(data);
-            const isActualAdmin = data?.role === 'admin';
-            setIsAdmin(isActualAdmin);
-            
-            if (isActualAdmin) {
-              setHasAdminAccess(true);
-              localStorage.setItem('temporaryAdminAccess', 'true');
-            }
-          });
+        const email = session.user.email;
+        const isActualAdmin = email === 'enosaf7@gmail.com';
+        setIsAdmin(isActualAdmin);
+        
+        if (isActualAdmin) {
+          setHasAdminAccess(true);
+          localStorage.setItem('temporaryAdminAccess', 'true');
+        }
       }
       
       setLoading(false);
@@ -120,14 +88,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (!error && email === 'enosaf7@gmail.com') {
-        // Set the user as admin manually here until the data is loaded from DB
+      if (email === 'enosaf7@gmail.com') {
         setHasAdminAccess(true);
         localStorage.setItem('temporaryAdminAccess', 'true');
       }
       
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       return { error };
     } catch (error) {
       return { error };
@@ -160,7 +126,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         session,
         user,
-        userData,
         loading,
         signIn,
         signUp,

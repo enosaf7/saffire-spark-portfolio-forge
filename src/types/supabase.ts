@@ -20,16 +20,6 @@ export interface Profile {
   updated_at: string;
 }
 
-export interface User {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  university: string | null;
-  role: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface Order {
   id: string;
   customer_id: string;
@@ -69,10 +59,6 @@ export function asTestimonials(data: any): Testimonial[] {
 
 export function asProfiles(data: any): Profile[] {
   return data as Profile[];
-}
-
-export function asUsers(data: any): User[] {
-  return data as User[];
 }
 
 export function asOrders(data: any): Order[] {

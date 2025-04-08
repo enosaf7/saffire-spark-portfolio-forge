@@ -30,6 +30,28 @@ export interface Order {
   created_at: string;
 }
 
+export interface Visitor {
+  id: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  visited_at: string | null;
+  page_visited: string | null;
+}
+
+export interface Promotion {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string | null;
+  target_url: string | null;
+  active: boolean | null;
+  priority: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string | null;
+  created_by: string;
+}
+
 // Type guards to convert data from Supabase
 export function asTestimonials(data: any): Testimonial[] {
   return data as Testimonial[];
@@ -41,4 +63,12 @@ export function asProfiles(data: any): Profile[] {
 
 export function asOrders(data: any): Order[] {
   return data as Order[];
+}
+
+export function asVisitors(data: any): Visitor[] {
+  return data as Visitor[];
+}
+
+export function asPromotions(data: any): Promotion[] {
+  return data as Promotion[];
 }

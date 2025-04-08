@@ -66,6 +66,48 @@ export type Database = {
         }
         Relationships: []
       }
+      promotions: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          created_by: string
+          description: string
+          end_date: string | null
+          id: string
+          image_url: string | null
+          priority: number | null
+          start_date: string | null
+          target_url: string | null
+          title: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by: string
+          description: string
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          priority?: number | null
+          start_date?: string | null
+          target_url?: string | null
+          title: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string
+          description?: string
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          priority?: number | null
+          start_date?: string | null
+          target_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       testimonials: {
         Row: {
           approved: boolean
@@ -99,6 +141,30 @@ export type Database = {
           stars?: number
           university?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      visitors: {
+        Row: {
+          id: string
+          ip_address: string | null
+          page_visited: string | null
+          user_agent: string | null
+          visited_at: string | null
+        }
+        Insert: {
+          id?: string
+          ip_address?: string | null
+          page_visited?: string | null
+          user_agent?: string | null
+          visited_at?: string | null
+        }
+        Update: {
+          id?: string
+          ip_address?: string | null
+          page_visited?: string | null
+          user_agent?: string | null
+          visited_at?: string | null
         }
         Relationships: []
       }

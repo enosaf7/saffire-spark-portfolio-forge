@@ -1,20 +1,29 @@
 
+import { useEffect } from "react";
 import Hero from "@/components/home/Hero";
 import Services from "@/components/home/Services";
 import Testimonials from "@/components/home/Testimonials";
+import Promotions from "@/components/home/Promotions";
 import Navbar from "@/components/ui/layout/Navbar";
 import Footer from "@/components/ui/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { trackVisit } from "@/utils/visitorTracking";
 
 const Index = () => {
+  useEffect(() => {
+    // Track page visit when the homepage is loaded
+    trackVisit('/');
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <main className="flex-grow">
         <Hero />
+        <Promotions />
         <Services />
         <Testimonials />
         

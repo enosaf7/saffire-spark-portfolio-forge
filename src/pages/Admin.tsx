@@ -13,7 +13,9 @@ import {
   Profile, 
   asProfiles, 
   Order, 
-  asOrders 
+  asOrders,
+  asVisitors,
+  Visitor
 } from '@/types/supabase';
 import {
   Table,
@@ -23,6 +25,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import VisitorsTab from '@/components/admin/VisitorsTab';
+import PromotionsTab from '@/components/admin/PromotionsTab';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -30,6 +34,7 @@ const Admin = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [analytics, setAnalytics] = useState({
     visitors: 0,
     newUsers: 0,
@@ -77,6 +82,15 @@ const Admin = () => {
 
         if (profileError) throw profileError;
         setUsers(asProfiles(profileData || []));
+        
+        // Fetch visitors count
+        const { data: visitorData, error: visitorError } = await supabase
+          .from('visitors')
+          .select('*');
+          
+        if (visitorError) throw visitorError;
+        const typedVisitors = asVisitors(visitorData || []);
+        setVisitors(typedVisitors);
 
         try {
           // Try to fetch orders from the orders table
@@ -104,10 +118,9 @@ const Admin = () => {
           }, {} as Record<string, number>);
           
           const popularService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'CV Writing';
-          const visitorCount = Math.floor(Math.random() * 300) + 200;
           
           setAnalytics({
-            visitors: visitorCount,
+            visitors: typedVisitors.length,
             newUsers: users.length,
             orders: {
               total,
@@ -115,7 +128,7 @@ const Admin = () => {
               inProgress,
               completed
             },
-            conversionRate: visitorCount > 0 ? `${((total / visitorCount) * 100).toFixed(1)}%` : '0%',
+            conversionRate: typedVisitors.length > 0 ? `${((total / typedVisitors.length) * 100).toFixed(1)}%` : '0%',
             popularService
           });
         } catch (orderError) {
@@ -124,7 +137,7 @@ const Admin = () => {
           
           // Set default analytics values if orders table doesn't exist yet
           setAnalytics({
-            visitors: Math.floor(Math.random() * 300) + 200,
+            visitors: typedVisitors.length,
             newUsers: users.length,
             orders: {
               total: 0,
@@ -258,6 +271,8 @@ const Admin = () => {
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="visitors">Visitors</TabsTrigger>
+            <TabsTrigger value="promotions">Promotions</TabsTrigger>
           </TabsList>
           
           <TabsContent value="testimonials" className="space-y-6">
@@ -512,6 +527,14 @@ const Admin = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="visitors">
+            <VisitorsTab />
+          </TabsContent>
+          
+          <TabsContent value="promotions">
+            <PromotionsTab />
           </TabsContent>
         </Tabs>
       </main>

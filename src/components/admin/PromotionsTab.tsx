@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from "@/integrations/supabase/client";
@@ -157,7 +156,7 @@ const PromotionsTab = () => {
         if (!updateError) {
           setPromotions(prevPromotions => 
             prevPromotions.map(p => 
-              p.id === currentPromotion.id ? { ...p, ...promotionData } : p
+              p.id === currentPromotion.id ? { ...p, ...promotionData as Promotion } : p
             )
           );
           toast.success('Promotion updated successfully');

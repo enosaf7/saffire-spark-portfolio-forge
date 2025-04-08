@@ -14,12 +14,14 @@ const Promotions = () => {
   useEffect(() => {
     const fetchPromotions = async () => {
       try {
+        const now = new Date().toISOString();
+        
         const { data, error } = await supabase
           .from('promotions')
           .select('*')
           .eq('active', true)
-          .lt('start_date', new Date().toISOString())
-          .or(`end_date.gt.${new Date().toISOString()},end_date.is.null`)
+          .or(`start_date.is.null,start_date.lte.${now}`)
+          .or(`end_date.is.null,end_date.gt.${now}`)
           .order('priority', { ascending: false });
 
         if (error) throw error;

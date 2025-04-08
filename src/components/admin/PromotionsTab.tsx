@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from "@/integrations/supabase/client";
@@ -139,10 +138,9 @@ const PromotionsTab = () => {
         return;
       }
 
-      // Ensure all required fields are present
       const promotionData = {
-        title: currentPromotion.title,
-        description: currentPromotion.description,
+        title: currentPromotion.title!,
+        description: currentPromotion.description!,
         created_by: user.id,
         image_url: currentPromotion.image_url || null,
         target_url: currentPromotion.target_url || null,
@@ -163,13 +161,12 @@ const PromotionsTab = () => {
         if (!updateError) {
           setPromotions(prevPromotions => 
             prevPromotions.map(p => 
-              p.id === currentPromotion.id ? { ...p, ...promotionData as Promotion } : p
+              p.id === currentPromotion.id ? { ...p, ...promotionData } as Promotion : p
             )
           );
           toast.success('Promotion updated successfully');
         }
       } else {
-        // For new promotions, use a single object (not an array)
         const { error: insertError } = await supabase
           .from('promotions')
           .insert(promotionData);
@@ -177,7 +174,7 @@ const PromotionsTab = () => {
         error = insertError;
         
         if (!insertError) {
-          await fetchPromotions(); // Refresh the list to get the new promotion
+          await fetchPromotions();
           toast.success('Promotion created successfully');
         }
       }
@@ -185,9 +182,9 @@ const PromotionsTab = () => {
       if (error) throw error;
       
       setIsDialogOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving promotion:', error);
-      toast.error('Failed to save promotion');
+      toast.error(`Failed to save promotion: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -209,9 +206,9 @@ const PromotionsTab = () => {
       toast.success('Promotion deleted successfully');
       setIsDeleteDialogOpen(false);
       setPromotionToDelete(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting promotion:', error);
-      toast.error('Failed to delete promotion');
+      toast.error(`Failed to delete promotion: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -309,7 +306,6 @@ const PromotionsTab = () => {
         </CardContent>
       </Card>
 
-      {/* Promotion Form Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -411,7 +407,6 @@ const PromotionsTab = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

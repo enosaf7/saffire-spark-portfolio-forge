@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,7 @@ const AuthForm = () => {
 
   // Redirect if user is already logged in
   if (user) {
-    if (user.email === 'admin@saffire-tech.com') {
+    if (user.email === 'enosaf7@gmail.com') {
       navigate('/admin');
     } else {
       navigate('/booking');
@@ -91,12 +90,6 @@ const AuthForm = () => {
     navigate('/booking?guest=true');
   };
 
-  const handleAdminAccess = () => {
-    setLoginEmail('user@example.com'); // Can be any email
-    setLoginPassword('admin123'); // Special password that grants admin access
-    toast.info('Admin credentials entered. Click Sign In to access the admin dashboard.');
-  };
-
   return (
     <div className="w-full max-w-md mx-auto">
       <Card className="shadow-lg">
@@ -110,7 +103,7 @@ const AuthForm = () => {
           <Alert className="mb-6 bg-blue-50 text-blue-800 border-blue-200">
             <InfoIcon className="h-4 w-4" />
             <AlertDescription>
-              For admin access, click the "Admin Access" button below and then "Sign In"
+              Enter your credentials to access your account
             </AlertDescription>
           </Alert>
           
@@ -240,15 +233,6 @@ const AuthForm = () => {
           >
             Continue as Guest
           </Button>
-          <div className="text-center w-full">
-            <button 
-              type="button" 
-              className="px-4 py-2 bg-saffire-purple text-white rounded text-sm mt-4 hover:bg-opacity-90"
-              onClick={handleAdminAccess}
-            >
-              Admin Access
-            </button>
-          </div>
         </CardFooter>
       </Card>
     </div>

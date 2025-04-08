@@ -8,7 +8,12 @@ const Hero = () => {
   const [loaded, setLoaded] = useState(false);
   
   useEffect(() => {
-    setLoaded(true);
+    // Small setTimeout to ensure smoother loading experience
+    const timer = setTimeout(() => {
+      setLoaded(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   return (
@@ -17,7 +22,7 @@ const Hero = () => {
       
       <div className="container mx-auto px-4 py-20 md:py-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className={`space-y-6 ${loaded ? 'animate-fade-in' : 'opacity-0'}`}>
+          <div className={`space-y-6 ${loaded ? 'opacity-100 transition-opacity duration-500' : 'opacity-0'}`}>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold leading-tight">
               Elevate Your Professional Identity with 
               <span className="relative">
@@ -43,13 +48,14 @@ const Hero = () => {
             </div>
           </div>
           
-          <div className={`flex justify-center ${loaded ? 'animate-scale-in' : 'opacity-0'}`} style={{ animationDelay: '0.3s' }}>
+          <div className={`flex justify-center ${loaded ? 'opacity-100 translate-y-0 transition-all duration-700' : 'opacity-0 translate-y-4'}`}>
             <div className="relative">
-              <div className="absolute -top-6 -left-6 w-64 h-64 rounded-full bg-white opacity-10 animate-pulse"></div>
+              <div className="absolute -top-6 -left-6 w-64 h-64 rounded-full bg-white opacity-10"></div>
               <img 
                 src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d" 
                 alt="Student working on portfolio" 
                 className="rounded-lg shadow-2xl w-full max-w-lg object-cover relative z-10"
+                loading="eager"
               />
               <div className="absolute -bottom-4 -right-4 w-40 h-40 bg-saffire-purple rounded-full opacity-30"></div>
             </div>

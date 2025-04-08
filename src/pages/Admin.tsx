@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,16 +78,15 @@ const Admin = () => {
         if (profileError) throw profileError;
         setUsers(asProfiles(profileData || []));
 
-        // Fetch orders from the orders table
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (orderError) {
-          console.error('Error fetching orders:', orderError);
-          setOrders([]);
-        } else {
+        try {
+          // Try to fetch orders from the orders table
+          const { data: orderData, error: orderError } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+  
+          if (orderError) throw orderError;
+          
           const typedOrders = asOrders(orderData || []);
           setOrders(typedOrders);
           
@@ -98,10 +98,10 @@ const Admin = () => {
           
           // Find most popular service
           const services = typedOrders.map(order => order.service) || [];
-          const serviceCounts = services.reduce((acc: Record<string, number>, service) => {
+          const serviceCounts: Record<string, number> = services.reduce((acc, service) => {
             acc[service] = (acc[service] || 0) + 1;
             return acc;
-          }, {});
+          }, {} as Record<string, number>);
           
           const popularService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'CV Writing';
           const visitorCount = Math.floor(Math.random() * 300) + 200;
@@ -117,6 +117,23 @@ const Admin = () => {
             },
             conversionRate: visitorCount > 0 ? `${((total / visitorCount) * 100).toFixed(1)}%` : '0%',
             popularService
+          });
+        } catch (orderError) {
+          console.error('Error fetching orders:', orderError);
+          setOrders([]);
+          
+          // Set default analytics values if orders table doesn't exist yet
+          setAnalytics({
+            visitors: Math.floor(Math.random() * 300) + 200,
+            newUsers: users.length,
+            orders: {
+              total: 0,
+              pending: 0,
+              inProgress: 0,
+              completed: 0
+            },
+            conversionRate: '0%',
+            popularService: 'CV Writing'
           });
         }
       } catch (error: any) {
@@ -457,33 +474,42 @@ const Admin = () => {
               </CardHeader>
               <CardContent className="p-6">
                 <p className="text-gray-700">Most popular service: <strong>{analytics.popularService}</strong></p>
-                <div className="mt-4">
-                  <div className="mb-2 flex justify-between">
-                    <span>CV Writing</span>
-                    <span>55%</span>
+                
+                {analytics.popularService === 'CV Writing' && (
+                  <div className="mt-4">
+                    <div className="mb-2 flex justify-between">
+                      <span>CV Writing</span>
+                      <span>55%</span>
+                    </div>
+                    <div className="h-4 w-full bg-gray-200 rounded-full">
+                      <div className="h-full bg-saffire-blue rounded-full" style={{ width: '55%' }}></div>
+                    </div>
                   </div>
-                  <div className="h-4 w-full bg-gray-200 rounded-full">
-                    <div className="h-full bg-saffire-blue rounded-full" style={{ width: '55%' }}></div>
+                )}
+                
+                {analytics.popularService === 'Portfolio Website' && (
+                  <div className="mt-4">
+                    <div className="mb-2 flex justify-between">
+                      <span>Portfolio Website</span>
+                      <span>30%</span>
+                    </div>
+                    <div className="h-4 w-full bg-gray-200 rounded-full">
+                      <div className="h-full bg-saffire-purple rounded-full" style={{ width: '30%' }}></div>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-4">
-                  <div className="mb-2 flex justify-between">
-                    <span>Portfolio Website</span>
-                    <span>30%</span>
+                )}
+                
+                {analytics.popularService === 'Combo Package' && (
+                  <div className="mt-4">
+                    <div className="mb-2 flex justify-between">
+                      <span>Combo Package</span>
+                      <span>15%</span>
+                    </div>
+                    <div className="h-4 w-full bg-gray-200 rounded-full">
+                      <div className="h-full bg-saffire-darkBlue rounded-full" style={{ width: '15%' }}></div>
+                    </div>
                   </div>
-                  <div className="h-4 w-full bg-gray-200 rounded-full">
-                    <div className="h-full bg-saffire-purple rounded-full" style={{ width: '30%' }}></div>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <div className="mb-2 flex justify-between">
-                    <span>Combo Package</span>
-                    <span>15%</span>
-                  </div>
-                  <div className="h-4 w-full bg-gray-200 rounded-full">
-                    <div className="h-full bg-saffire-darkBlue rounded-full" style={{ width: '15%' }}></div>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

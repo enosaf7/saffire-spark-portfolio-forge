@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +11,7 @@ type AuthContextType = {
   signUp: (email: string, password: string, metadata: any) => Promise<{ error: any | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
-  hasAdminAccess: boolean; // New property to grant temporary admin access
+  hasAdminAccess: boolean; 
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -23,7 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   signUp: async () => ({ error: null }),
   signOut: async () => {},
   isAdmin: false,
-  hasAdminAccess: false, // Initialize the new property
+  hasAdminAccess: false,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -31,9 +30,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [hasAdminAccess, setHasAdminAccess] = useState(false); // Add state for temporary admin access
+  const [hasAdminAccess, setHasAdminAccess] = useState(false);
   
-  // Check for admin access in localStorage
   useEffect(() => {
     const storedAdminAccess = localStorage.getItem('temporaryAdminAccess');
     if (storedAdminAccess === 'true') {
@@ -42,43 +40,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Check if user is admin (separate call to avoid auth deadlock)
         if (session?.user) {
-          setTimeout(() => {
-            const email = session.user.email;
-            // Check both actual admin email and also our development override
-            const isActualAdmin = email === 'admin@saffire-tech.com';
-            setIsAdmin(isActualAdmin);
-            
-            // If the user is a real admin, also ensure hasAdminAccess is true
-            if (isActualAdmin) {
-              setHasAdminAccess(true);
-              localStorage.setItem('temporaryAdminAccess', 'true');
-            }
-          }, 0);
+          const email = session.user.email;
+          const isActualAdmin = email === 'enosaf7@gmail.com';
+          setIsAdmin(isActualAdmin);
+          
+          if (isActualAdmin) {
+            setHasAdminAccess(true);
+            localStorage.setItem('temporaryAdminAccess', 'true');
+          }
         } else {
           setIsAdmin(false);
         }
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
         const email = session.user.email;
-        const isActualAdmin = email === 'admin@saffire-tech.com';
+        const isActualAdmin = email === 'enosaf7@gmail.com';
         setIsAdmin(isActualAdmin);
         
-        // If the user is a real admin, also ensure hasAdminAccess is true
         if (isActualAdmin) {
           setHasAdminAccess(true);
           localStorage.setItem('temporaryAdminAccess', 'true');
@@ -93,14 +83,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  // Function to grant temporary admin access for development
   const signIn = async (email: string, password: string) => {
     try {
-      // Special case for demo purposes - grant admin access for any login
-      if (password === 'admin123') {
+      if (email === 'enosaf7@gmail.com' && password === 'osafo811') {
         setHasAdminAccess(true);
         localStorage.setItem('temporaryAdminAccess', 'true');
-        toast.success('Admin access granted for this session');
       }
       
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -126,7 +113,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    // Clear temporary admin access on sign out
     setHasAdminAccess(false);
     localStorage.removeItem('temporaryAdminAccess');
     await supabase.auth.signOut();
@@ -142,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signUp,
         signOut,
         isAdmin,
-        hasAdminAccess, // Include the new property
+        hasAdminAccess,
       }}
     >
       {children}

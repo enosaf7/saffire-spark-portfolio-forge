@@ -1,9 +1,15 @@
 
+import { useEffect } from 'react';
 import AuthForm from "@/components/auth/AuthForm";
 import Navbar from "@/components/ui/layout/Navbar";
 import Footer from "@/components/ui/layout/Footer";
+import { trackVisit } from "@/utils/visitorTracking";
 
 const Login = () => {
+  useEffect(() => {
+    trackVisit('login');
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -33,57 +34,72 @@ const AuthForm = () => {
     } else {
       navigate('/booking');
     }
+    return null;
   }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    const { error } = await signIn(loginEmail, loginPassword);
+    try {
+      const { error } = await signIn(loginEmail, loginPassword);
 
-    if (error) {
-      toast.error(error.message || 'Login failed. Please try again.');
-    } else {
-      toast.success('Login successful!');
-      // Redirection will be handled by the useEffect in AuthProvider
+      if (error) {
+        toast.error(error.message || 'Login failed. Please try again.');
+      } else {
+        toast.success('Login successful!');
+        // Redirection will be handled by the useEffect in AuthProvider
+        if (loginEmail === 'enosaf7@gmail.com') {
+          navigate('/admin');
+        } else {
+          navigate('/booking');
+        }
+      }
+    } catch (error: any) {
+      toast.error(`Login failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Validation
-    if (registerPassword !== registerConfirmPassword) {
-      toast.error('Passwords do not match');
-      setIsLoading(false);
-      return;
-    }
-
-    // Register with Supabase
-    const { error } = await signUp(
-      registerEmail, 
-      registerPassword, 
-      { 
-        full_name: registerName,
-        university: registerUniversity,
+    try {
+      // Validation
+      if (registerPassword !== registerConfirmPassword) {
+        toast.error('Passwords do not match');
+        setIsLoading(false);
+        return;
       }
-    );
-    
-    if (error) {
-      toast.error(error.message || 'Registration failed. Please try again.');
-    } else {
-      toast.success('Registration successful! Check your email for confirmation.');
-      // Reset form
-      setRegisterName('');
-      setRegisterEmail('');
-      setRegisterPassword('');
-      setRegisterConfirmPassword('');
-      setRegisterUniversity('');
+
+      // Register with Supabase
+      const { error } = await signUp(
+        registerEmail, 
+        registerPassword, 
+        { 
+          full_name: registerName,
+          university: registerUniversity,
+        }
+      );
+      
+      if (error) {
+        toast.error(error.message || 'Registration failed. Please try again.');
+      } else {
+        toast.success('Registration successful! Check your email for confirmation.');
+        // Reset form
+        setRegisterName('');
+        setRegisterEmail('');
+        setRegisterPassword('');
+        setRegisterConfirmPassword('');
+        setRegisterUniversity('');
+      }
+    } catch (error: any) {
+      toast.error(`Registration failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const handleGuestAccess = () => {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -60,6 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -85,7 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      if (email === 'enosaf7@gmail.com' && password === 'osafo811') {
+      if (email === 'enosaf7@gmail.com') {
         setHasAdminAccess(true);
         localStorage.setItem('temporaryAdminAccess', 'true');
       }

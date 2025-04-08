@@ -6,7 +6,8 @@ export async function trackVisit(pageVisited: string): Promise<void> {
     const visitorData = {
       ip_address: 'anonymous', // For privacy reasons we're not actually collecting IP
       user_agent: navigator.userAgent,
-      page_visited: pageVisited
+      page_visited: pageVisited,
+      visited_at: new Date().toISOString()
     };
     
     await supabase.from('visitors').insert(visitorData);

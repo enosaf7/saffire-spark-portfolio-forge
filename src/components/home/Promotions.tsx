@@ -24,7 +24,11 @@ const Promotions = () => {
           .or(`end_date.is.null,end_date.gt.${now}`)
           .order('priority', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching promotions:', error);
+          throw error;
+        }
+        
         setPromotions(asPromotions(data || []));
       } catch (error) {
         console.error('Error fetching promotions:', error);

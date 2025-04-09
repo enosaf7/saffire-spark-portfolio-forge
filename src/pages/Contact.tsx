@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import Navbar from "@/components/ui/layout/Navbar";
 import Footer from "@/components/ui/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,15 +9,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Phone, User, Mail, Clock, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Helmet } from 'react-helmet';
+import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     message: '',
+    subject: 'Contact Form Submission',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -30,7 +32,7 @@ const Contact = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
@@ -41,26 +43,38 @@ const Contact = () => {
       return;
     }
     
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      // Call the contact-form edge function
+      const { error } = await supabase.functions.invoke('contact-form', {
+        body: formData
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      
       toast.success('Your message has been sent successfully!');
-      setIsSubmitting(false);
       setSubmitted(true);
-      setFormData({ name: '', email: '', message: '' });
+      setFormData({ name: '', email: '', message: '', subject: 'Contact Form Submission' });
       
       // Reset submitted state after showing success message
       setTimeout(() => {
         setSubmitted(false);
       }, 3000);
-    }, 1500);
+    } catch (error: any) {
+      toast.error(`Failed to send message: ${error.message}`);
+      console.error('Contact form error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Helmet>
         <title>Contact SaffireTech | Professional CV & Portfolio Services</title>
-        <meta name="description" content="Contact SaffireTech for professional CV writing and portfolio website development services tailored for university students." />
-        <meta name="keywords" content="contact, CV writing, portfolio development, university students" />
+        <meta name="description" content="Contact SaffireTech for professional CV writing and portfolio website development services." />
+        <meta name="keywords" content="contact, CV writing, portfolio development" />
       </Helmet>
       
       <Navbar />
@@ -271,10 +285,10 @@ const Contact = () => {
             <div className="mt-12 text-center">
               <h2 className="text-xl font-semibold mb-4">Service Areas</h2>
               <p className="text-gray-600 mb-2">
-                We provide services to university students throughout Ghana, with special focus on:
+                We provide professional services throughout Ghana and beyond, with special focus on:
               </p>
               <div className="inline-flex flex-wrap justify-center gap-2 mt-2">
-                {["Accra", "Kumasi", "Cape Coast", "Tamale", "Ho", "Koforidua"].map((city) => (
+                {["Accra", "Kumasi", "Cape Coast", "Tamale", "Ho", "Koforidua", "International"].map((city) => (
                   <span key={city} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
                     {city}
                   </span>

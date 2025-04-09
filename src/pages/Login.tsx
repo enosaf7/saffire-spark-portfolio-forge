@@ -4,6 +4,7 @@ import AuthForm from "@/components/auth/AuthForm";
 import Navbar from "@/components/ui/layout/Navbar";
 import Footer from "@/components/ui/layout/Footer";
 import { trackVisit } from "@/utils/visitorTracking";
+import { Gem } from "lucide-react";
 
 const Login = () => {
   useEffect(() => {
@@ -17,9 +18,15 @@ const Login = () => {
       <main className="flex-grow">
         <section className="py-16 md:py-24 bg-gray-50">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">
-              Sign In to <span className="text-saffire-blue">Saffire</span>Tech
-            </h1>
+            <div className="flex justify-center mb-8">
+              <div className="inline-flex items-center gap-2 text-3xl md:text-4xl font-bold">
+                Sign In to 
+                <span className="flex items-center text-saffire-blue">
+                  <Gem className="h-8 w-8 mr-1" />
+                  SaffireTech
+                </span>
+              </div>
+            </div>
             <AuthForm />
           </div>
         </section>

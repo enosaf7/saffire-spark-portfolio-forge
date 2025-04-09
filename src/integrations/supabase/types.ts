@@ -9,6 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      email_messages: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          message: string
+          name: string
+          status: string | null
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          message: string
+          name: string
+          status?: string | null
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          status?: string | null
+          subject?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          recipient: string
+          sent_at: string | null
+          status: string | null
+          subject: string
+          type: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          recipient: string
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          type: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          recipient?: string
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          type?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -141,6 +204,36 @@ export type Database = {
           stars?: number
           university?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+          university: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+          university?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          university?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }

@@ -27,6 +27,9 @@ import {
 } from "@/components/ui/table";
 import VisitorsTab from '@/components/admin/VisitorsTab';
 import PromotionsTab from '@/components/admin/PromotionsTab';
+import UsersTab from '@/components/admin/UsersTab';
+import MessagesTab from '@/components/admin/MessagesTab';
+import { Gem } from "lucide-react";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -222,7 +225,7 @@ const Admin = () => {
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-saffire-blue to-saffire-purple flex items-center justify-center text-white font-bold text-xl">
-              S
+              <Gem className="h-5 w-5" />
             </div>
             <span className="font-heading font-bold text-xl">
               Saffire<span className="text-saffire-blue">Tech</span> <span className="text-sm font-normal">Admin</span>
@@ -266,10 +269,11 @@ const Admin = () => {
         </div>
         
         <Tabs defaultValue="testimonials" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex flex-wrap">
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="visitors">Visitors</TabsTrigger>
             <TabsTrigger value="promotions">Promotions</TabsTrigger>
@@ -419,45 +423,11 @@ const Admin = () => {
           </TabsContent>
           
           <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Registered Users</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>University</TableHead>
-                        <TableHead>Join Date</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.length > 0 ? (
-                        users.map((profile) => (
-                          <TableRow key={profile.id}>
-                            <TableCell>{profile.full_name || 'No name'}</TableCell>
-                            <TableCell>{profile.university || 'Not specified'}</TableCell>
-                            <TableCell>{new Date(profile.created_at).toLocaleDateString()}</TableCell>
-                            <TableCell>
-                              <Button variant="outline" size="sm">View</Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center text-gray-500">
-                            No users found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+            <UsersTab />
+          </TabsContent>
+
+          <TabsContent value="messages" className="space-y-6">
+            <MessagesTab />
           </TabsContent>
           
           <TabsContent value="analytics" className="space-y-6">

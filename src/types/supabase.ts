@@ -52,6 +52,39 @@ export interface Promotion {
   created_by: string;
 }
 
+export interface User {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  university: string | null;
+  phone: string | null;
+  auth_provider: string | null;
+  role: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface EmailMessage {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  subject: string | null;
+  status: string | null;
+  created_at: string | null;
+}
+
+export interface Notification {
+  id: string;
+  type: string;
+  recipient: string;
+  subject: string;
+  content: string;
+  status: string | null;
+  created_at: string | null;
+  sent_at: string | null;
+}
+
 // Type guards to convert data from Supabase
 export function asTestimonials(data: any): Testimonial[] {
   return data as Testimonial[];
@@ -71,4 +104,16 @@ export function asVisitors(data: any): Visitor[] {
 
 export function asPromotions(data: any): Promotion[] {
   return data as Promotion[];
+}
+
+export function asUsers(data: any): User[] {
+  return data as User[];
+}
+
+export function asEmailMessages(data: any): EmailMessage[] {
+  return data as EmailMessage[];
+}
+
+export function asNotifications(data: any): Notification[] {
+  return data as Notification[];
 }

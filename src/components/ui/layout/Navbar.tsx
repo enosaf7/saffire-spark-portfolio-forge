@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogIn } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -57,8 +57,11 @@ const Navbar = () => {
                 <Button variant="ghost" onClick={handleLogout}>Logout</Button>
               </div>
             ) : (
-              <Link to="/login">
-                <Button>Login</Button>
+              <Link to="/login" className="flex">
+                <Button className="flex items-center gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Login
+                </Button>
               </Link>
             )}
           </div>
@@ -86,7 +89,10 @@ const Navbar = () => {
                 <Button variant="ghost" onClick={() => { handleLogout(); setIsOpen(false); }}>Logout</Button>
               ) : (
                 <Link to="/login" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full">Login</Button>
+                  <Button className="w-full flex items-center gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Login
+                  </Button>
                 </Link>
               )}
             </nav>

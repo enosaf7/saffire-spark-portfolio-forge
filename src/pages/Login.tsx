@@ -33,7 +33,7 @@ const Login = () => {
       
       <Navbar />
       
-      <main className="flex-grow">
+      <main className="flex-grow pt-20">
         <section className="py-16 md:py-24 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="flex justify-center mb-8">

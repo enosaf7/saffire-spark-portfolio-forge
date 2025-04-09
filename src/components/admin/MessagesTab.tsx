@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from "@/integrations/supabase/client";
 import { EmailMessage, asEmailMessages } from '@/types/supabase';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { RefreshCw, Mail, MailOpen, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Loader2, Search, Mail, Trash2, Eye } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -14,239 +15,261 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 
 const MessagesTab = () => {
+  const {  } = useAuth();
   const [messages, setMessages] = useState<EmailMessage[]>([]);
-  const [filteredMessages, setFilteredMessages] = useState<EmailMessage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMessage, setSelectedMessage] = useState<EmailMessage | null>(null);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState<EmailMessage | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
 
   const fetchMessages = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('email_messages')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      const typedMessages = asEmailMessages(data || []);
-      setMessages(typedMessages);
-      setFilteredMessages(typedMessages);
-    } catch (error: any) {
+      setMessages(asEmailMessages(data || []));
+    } catch (error) {
       console.error('Error fetching messages:', error);
-      toast.error(`Failed to load messages: ${error.message}`);
+      toast.error('Failed to load messages');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchMessages();
-  }, []);
-
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredMessages(messages);
-    } else {
-      const filtered = messages.filter(message => 
-        (message.name && message.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (message.email && message.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (message.subject && message.subject.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      setFilteredMessages(filtered);
-    }
-  }, [searchTerm, messages]);
-
-  const handleViewMessage = (message: EmailMessage) => {
-    setSelectedMessage(message);
-    setOpenDialog(true);
-    
-    // If the message is unread, mark it as read
-    if (message.status === 'unread') {
-      updateMessageStatus(message.id, 'read');
-    }
-  };
-
-  const updateMessageStatus = async (messageId: string, status: string) => {
+  const handleReadMessage = async (id: string) => {
     try {
       const { error } = await supabase
         .from('email_messages')
-        .update({ status })
-        .eq('id', messageId);
+        .update({ status: 'read' })
+        .eq('id', id);
 
       if (error) throw error;
       
-      // Update local state
-      setMessages(prev => 
-        prev.map(m => m.id === messageId ? { ...m, status } : m)
+      setMessages(prevMessages => 
+        prevMessages.map(m => 
+          m.id === id ? { ...m, status: 'read' } : m
+        )
       );
-      setFilteredMessages(prev => 
-        prev.map(m => m.id === messageId ? { ...m, status } : m)
-      );
-    } catch (error: any) {
+      
+      toast.success('Message marked as read');
+    } catch (error) {
       console.error('Error updating message status:', error);
+      toast.error('Failed to update message status');
     }
   };
 
-  const handleDeleteMessage = async (messageId: string) => {
+  const handleDeleteMessage = async (id: string) => {
     try {
+      setIsDeleting(true);
+      
       const { error } = await supabase
         .from('email_messages')
         .delete()
-        .eq('id', messageId);
+        .eq('id', id);
 
       if (error) throw error;
       
-      toast.success('Message deleted');
+      setMessages(prevMessages => 
+        prevMessages.filter(m => m.id !== id)
+      );
       
-      // Remove from local state
-      setMessages(prev => prev.filter(m => m.id !== messageId));
-      setFilteredMessages(prev => prev.filter(m => m.id !== messageId));
-      
-      // Close dialog if the deleted message was being viewed
-      if (selectedMessage && selectedMessage.id === messageId) {
-        setOpenDialog(false);
-      }
-    } catch (error: any) {
-      toast.error(`Failed to delete message: ${error.message}`);
+      toast.success('Message deleted successfully');
+      setIsDeleteDialogOpen(false);
+      setMessageToDelete(null);
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast.error('Failed to delete message');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Unknown';
-    
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  const handleOpenDeleteDialog = (id: string) => {
+    setMessageToDelete(id);
+    setIsDeleteDialogOpen(true);
   };
 
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const handleViewMessage = (message: EmailMessage) => {
+    setCurrentMessage(message);
+    setIsViewDialogOpen(true);
+    if (message.status === 'unread') {
+      handleReadMessage(message.id);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-4">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-t-saffire-blue border-gray-200 mb-4"></div>
+        <p className="text-gray-500">Loading messages...</p>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Contact Form Messages</h3>
+        <Button variant="outline" onClick={fetchMessages} disabled={loading}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Contact Messages</span>
-            <Badge variant="outline" className="ml-2">
-              {messages.filter(msg => msg.status === 'unread').length} unread
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-saffire-blue" />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Status</TableHead>
-                    <TableHead>From</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredMessages.length > 0 ? (
-                    filteredMessages.map((msg) => (
-                      <TableRow key={msg.id} className={msg.status === 'unread' ? 'bg-blue-50' : ''}>
-                        <TableCell>
-                          <Badge variant={msg.status === 'unread' ? 'secondary' : 'outline'}>
-                            {msg.status === 'unread' ? 'New' : 'Read'}
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {messages.length > 0 ? (
+                  messages.map((message) => (
+                    <TableRow key={message.id}>
+                      <TableCell className="font-medium">{message.name}</TableCell>
+                      <TableCell>{message.email}</TableCell>
+                      <TableCell>
+                        {message.status === 'unread' ? (
+                          <Badge variant="destructive" className="text-xs">
+                            Unread
                           </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{msg.name}</TableCell>
-                        <TableCell>{msg.email}</TableCell>
-                        <TableCell>{formatDate(msg.created_at)}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="flex items-center gap-1"
-                              onClick={() => handleViewMessage(msg)}
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                              <span className="hidden sm:inline">View</span>
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="destructive" 
-                              className="flex items-center gap-1"
-                              onClick={() => handleDeleteMessage(msg.id)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              <span className="hidden sm:inline">Delete</span>
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
-                        No messages found
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            Read
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {message.created_at 
+                          ? formatDate(message.created_at) 
+                          : 'Unknown'}
+                      </TableCell>
+                      <TableCell className="flex space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleViewMessage(message)}
+                          title="View Message"
+                        >
+                          {message.status === 'unread' ? (
+                            <Mail className="h-4 w-4" />
+                          ) : (
+                            <MailOpen className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => handleOpenDeleteDialog(message.id)}
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                      No messages found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        {selectedMessage && (
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" /> Message from {selectedMessage.name}
-              </DialogTitle>
-              <DialogDescription>
-                <span className="block text-sm text-muted-foreground">
-                  {selectedMessage.email} - {formatDate(selectedMessage.created_at)}
+      {/* View Message Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{currentMessage?.subject || 'Message'}</DialogTitle>
+            <DialogDescription>
+              From: {currentMessage?.name} ({currentMessage?.email})
+              {currentMessage?.created_at && (
+                <span className="block text-xs mt-1">
+                  {formatDate(currentMessage.created_at)}
                 </span>
-              </DialogDescription>
-            </DialogHeader>
-              
-            <div className="bg-muted/50 p-4 rounded-md mt-2 whitespace-pre-wrap">
-              {selectedMessage.message}
-            </div>
-
-            <DialogFooter className="flex items-center justify-between sm:justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  window.open(`mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject || 'Your message'}`);
-                }}
-              >
-                Reply by Email
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={() => handleDeleteMessage(selectedMessage.id)}
-              >
-                Delete Message
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="my-6 whitespace-pre-wrap">
+            {currentMessage?.message}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsViewDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
-    </>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Message</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this message? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => messageToDelete && handleDeleteMessage(messageToDelete)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

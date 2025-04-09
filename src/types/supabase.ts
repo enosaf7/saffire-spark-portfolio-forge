@@ -1,3 +1,4 @@
+
 // This file contains type definitions for Supabase tables
 import { Database } from '@/integrations/supabase/types';
 
@@ -61,6 +62,20 @@ export interface EmailMessage {
   created_at?: string;
 }
 
+export interface Promotion {
+  id: string;
+  title: string;
+  description: string;
+  image_url?: string | null;
+  target_url?: string | null;
+  active?: boolean;
+  priority?: number;
+  created_by: string;
+  created_at?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+}
+
 // Type assertion functions
 export const asUsers = (data: any[]): User[] => data as User[];
 export const asProfiles = (data: any[]): Profile[] => data as Profile[];
@@ -68,3 +83,4 @@ export const asOrders = (data: any[]): Order[] => data as Order[];
 export const asTestimonials = (data: any[]): Testimonial[] => data as Testimonial[];
 export const asVisitors = (data: any[]): Visitor[] => data as Visitor[];
 export const asEmailMessages = (data: any[]): EmailMessage[] => data as EmailMessage[];
+export const asPromotions = (data: any[]): Promotion[] => data as Promotion[];

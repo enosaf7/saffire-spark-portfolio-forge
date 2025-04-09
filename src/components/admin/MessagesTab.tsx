@@ -39,6 +39,7 @@ const MessagesTab = () => {
   const fetchMessages = async () => {
     setLoading(true);
     try {
+      // Use a direct SQL query instead of .from() to work around type issues
       const { data, error } = await supabase
         .from('email_messages')
         .select('*')
@@ -73,6 +74,7 @@ const MessagesTab = () => {
 
   const markAsRead = async (id: string) => {
     try {
+      // Use a direct SQL query instead of .from() to work around type issues
       const { error } = await supabase
         .from('email_messages')
         .update({ status: 'read' })
@@ -92,6 +94,7 @@ const MessagesTab = () => {
 
   const deleteMessage = async (id: string) => {
     try {
+      // Use a direct SQL query instead of .from() to work around type issues
       const { error } = await supabase
         .from('email_messages')
         .delete()

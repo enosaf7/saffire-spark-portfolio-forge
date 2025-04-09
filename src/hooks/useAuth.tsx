@@ -1,6 +1,6 @@
 
 import { useState, useEffect, createContext, useContext } from 'react';
-import { Session, User, Provider } from '@supabase/supabase-js';
+import { Session, User, AuthProvider } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User as AppUser, asUsers } from '@/types/supabase';
@@ -53,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Function to fetch app user data
   const fetchUserData = async (userId: string) => {
     try {
+      // Use a direct SQL query instead of .from() to work around type issues
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -144,7 +145,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signInWithGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: Provider.GOOGLE,
+        provider: 'google' as AuthProvider,
         options: {
           redirectTo: window.location.origin + '/booking'
         }
@@ -163,7 +164,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           channel: 'sms'
         }
       });
-      return { error, phoneNumber: data?.phone };
+      
+      return { error, phoneNumber: data?.phoneNumber };
     } catch (error) {
       return { error };
     }

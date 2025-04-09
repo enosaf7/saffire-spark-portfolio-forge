@@ -5,6 +5,7 @@ import Navbar from "@/components/ui/layout/Navbar";
 import Footer from "@/components/ui/layout/Footer";
 import { trackVisit } from "@/utils/visitorTracking";
 import { Gem } from "lucide-react";
+import { Helmet } from 'react-helmet';
 
 const Login = () => {
   useEffect(() => {
@@ -13,6 +14,11 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>Login | SaffireTech</title>
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+      </Helmet>
+      
       <Navbar />
       
       <main className="flex-grow">

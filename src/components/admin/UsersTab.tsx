@@ -26,7 +26,7 @@ const UsersTab = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Use a direct SQL query instead of .from() to work around type issues
+      // Directly query the users table
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -62,7 +62,7 @@ const UsersTab = () => {
 
   const handlePromoteToAdmin = async (userId: string) => {
     try {
-      // Use a direct SQL query instead of .from() to work around type issues
+      // Update the user's role to admin
       const { error } = await supabase
         .from('users')
         .update({ role: 'admin' })
@@ -79,7 +79,7 @@ const UsersTab = () => {
 
   const handleRemoveAdmin = async (userId: string) => {
     try {
-      // Use a direct SQL query instead of .from() to work around type issues
+      // Update the user's role to user
       const { error } = await supabase
         .from('users')
         .update({ role: 'user' })

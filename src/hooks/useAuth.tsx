@@ -192,6 +192,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email, 
         password, 
         options: { 
+          emailRedirectTo: `${window.location.origin}/login?confirmed=true`,
           data: {
             full_name: metadata.full_name || metadata.fullName,
             university: metadata.university,

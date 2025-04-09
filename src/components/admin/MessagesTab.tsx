@@ -1,13 +1,11 @@
-
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 import { EmailMessage, asEmailMessages } from '@/types/supabase';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import { Loader2, Search, Mail, Trash2, Eye } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -16,8 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -25,34 +21,32 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Mail, Trash2, Eye } from 'lucide-react';
+} from "@/components/ui/dialog";
 
 const MessagesTab = () => {
   const [messages, setMessages] = useState<EmailMessage[]>([]);
+  const [filteredMessages, setFilteredMessages] = useState<EmailMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedMessage, setSelectedMessage] = useState<EmailMessage | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
 
   const fetchMessages = async () => {
     setLoading(true);
     try {
-      // Use a direct SQL query instead of .from() to work around type issues
       const { data, error } = await supabase
         .from('email_messages')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
-      }
-
-      setMessages(asEmailMessages(data || []));
+      if (error) throw error;
+      
+      const typedMessages = asEmailMessages(data || []);
+      setMessages(typedMessages);
+      setFilteredMessages(typedMessages);
     } catch (error: any) {
-      toast.error(`Error loading messages: ${error.message}`);
       console.error('Error fetching messages:', error);
+      toast.error(`Failed to load messages: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -62,55 +56,71 @@ const MessagesTab = () => {
     fetchMessages();
   }, []);
 
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredMessages(messages);
+    } else {
+      const filtered = messages.filter(message => 
+        (message.name && message.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (message.email && message.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (message.subject && message.subject.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      setFilteredMessages(filtered);
+    }
+  }, [searchTerm, messages]);
+
   const handleViewMessage = (message: EmailMessage) => {
     setSelectedMessage(message);
-    setDialogOpen(true);
+    setOpenDialog(true);
     
-    // Mark as read if unread
+    // If the message is unread, mark it as read
     if (message.status === 'unread') {
-      markAsRead(message.id);
+      updateMessageStatus(message.id, 'read');
     }
   };
 
-  const markAsRead = async (id: string) => {
+  const updateMessageStatus = async (messageId: string, status: string) => {
     try {
-      // Use a direct SQL query instead of .from() to work around type issues
       const { error } = await supabase
         .from('email_messages')
-        .update({ status: 'read' })
-        .eq('id', id);
+        .update({ status })
+        .eq('id', messageId);
 
       if (error) throw error;
       
-      setMessages(prevMessages => 
-        prevMessages.map(msg => 
-          msg.id === id ? { ...msg, status: 'read' } : msg
-        )
+      // Update local state
+      setMessages(prev => 
+        prev.map(m => m.id === messageId ? { ...m, status } : m)
+      );
+      setFilteredMessages(prev => 
+        prev.map(m => m.id === messageId ? { ...m, status } : m)
       );
     } catch (error: any) {
-      console.error('Error marking message as read:', error);
+      console.error('Error updating message status:', error);
     }
   };
 
-  const deleteMessage = async (id: string) => {
+  const handleDeleteMessage = async (messageId: string) => {
     try {
-      // Use a direct SQL query instead of .from() to work around type issues
       const { error } = await supabase
         .from('email_messages')
         .delete()
-        .eq('id', id);
+        .eq('id', messageId);
 
       if (error) throw error;
       
-      setMessages(prevMessages => prevMessages.filter(msg => msg.id !== id));
-      toast.success('Message deleted successfully');
+      toast.success('Message deleted');
       
-      if (selectedMessage?.id === id) {
-        setDialogOpen(false);
+      // Remove from local state
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+      setFilteredMessages(prev => prev.filter(m => m.id !== messageId));
+      
+      // Close dialog if the deleted message was being viewed
+      if (selectedMessage && selectedMessage.id === messageId) {
+        setOpenDialog(false);
       }
     } catch (error: any) {
-      toast.error(`Error deleting message: ${error.message}`);
-      console.error('Error deleting message:', error);
+      toast.error(`Failed to delete message: ${error.message}`);
     }
   };
 
@@ -150,8 +160,8 @@ const MessagesTab = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {messages.length > 0 ? (
-                    messages.map((msg) => (
+                  {filteredMessages.length > 0 ? (
+                    filteredMessages.map((msg) => (
                       <TableRow key={msg.id} className={msg.status === 'unread' ? 'bg-blue-50' : ''}>
                         <TableCell>
                           <Badge variant={msg.status === 'unread' ? 'secondary' : 'outline'}>
@@ -176,7 +186,7 @@ const MessagesTab = () => {
                               size="sm" 
                               variant="destructive" 
                               className="flex items-center gap-1"
-                              onClick={() => deleteMessage(msg.id)}
+                              onClick={() => handleDeleteMessage(msg.id)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                               <span className="hidden sm:inline">Delete</span>
@@ -199,7 +209,7 @@ const MessagesTab = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         {selectedMessage && (
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
@@ -228,7 +238,7 @@ const MessagesTab = () => {
               </Button>
               <Button 
                 variant="destructive"
-                onClick={() => deleteMessage(selectedMessage.id)}
+                onClick={() => handleDeleteMessage(selectedMessage.id)}
               >
                 Delete Message
               </Button>

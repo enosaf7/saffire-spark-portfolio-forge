@@ -1,22 +1,34 @@
 
 import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AuthForm from "@/components/auth/AuthForm";
 import Navbar from "@/components/ui/layout/Navbar";
 import Footer from "@/components/ui/layout/Footer";
 import { trackVisit } from "@/utils/visitorTracking";
+import { toast } from "sonner";
 import { Gem } from "lucide-react";
 import { Helmet } from 'react-helmet';
 
 const Login = () => {
+  const [searchParams] = useSearchParams();
+  const confirmed = searchParams.get('confirmed');
+  
   useEffect(() => {
     trackVisit('login');
-  }, []);
+    
+    // Check if email was confirmed
+    if (confirmed === 'true') {
+      toast.success('Your email has been confirmed! You can now log in.', {
+        duration: 5000
+      });
+    }
+  }, [confirmed]);
 
   return (
     <div className="min-h-screen flex flex-col">
       <Helmet>
         <title>Login | SaffireTech</title>
-        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+        <link rel="icon" href="/lovable-uploads/4ff9857f-ce94-49e9-887b-f0507f2d14ed.png" type="image/png" />
       </Helmet>
       
       <Navbar />

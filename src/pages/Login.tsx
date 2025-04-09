@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import AuthForm from "@/components/auth/AuthForm";
 import Navbar from "@/components/ui/layout/Navbar";
 import Footer from "@/components/ui/layout/Footer";
@@ -12,6 +12,7 @@ import { Helmet } from 'react-helmet';
 const Login = () => {
   const [searchParams] = useSearchParams();
   const confirmed = searchParams.get('confirmed');
+  const location = useLocation();
   
   useEffect(() => {
     trackVisit('login');

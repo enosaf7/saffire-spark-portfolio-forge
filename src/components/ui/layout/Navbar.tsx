@@ -1,16 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Menu, X, LogIn } from 'lucide-react';
+import { Menu, X, LogIn, LogOut } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -28,6 +29,9 @@ const Navbar = () => {
     toast.success('Logged out successfully');
     navigate('/');
   };
+
+  // Hide login button if already on login page
+  const isLoginPage = location.pathname === '/login';
   
   return (
     <header className={`fixed w-full z-30 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
@@ -54,15 +58,24 @@ const Navbar = () => {
             
             {user ? (
               <div className="flex items-center space-x-3">
-                <Button variant="ghost" onClick={handleLogout}>Logout</Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleLogout} 
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
               </div>
             ) : (
-              <Link to="/login" className="flex">
-                <Button className="flex items-center gap-2">
-                  <LogIn className="h-4 w-4" />
-                  Login
-                </Button>
-              </Link>
+              !isLoginPage && (
+                <Link to="/login" className="flex">
+                  <Button className="flex items-center gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Login
+                  </Button>
+                </Link>
+              )
             )}
           </div>
           
@@ -86,14 +99,23 @@ const Navbar = () => {
               <Link to="/contact" className="hover:text-saffire-blue" onClick={() => setIsOpen(false)}>Contact</Link>
               
               {user ? (
-                <Button variant="ghost" onClick={() => { handleLogout(); setIsOpen(false); }}>Logout</Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => { handleLogout(); setIsOpen(false); }} 
+                  className="flex items-center gap-2 justify-start pl-0"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
               ) : (
-                <Link to="/login" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full flex items-center gap-2">
-                    <LogIn className="h-4 w-4" />
-                    Login
-                  </Button>
-                </Link>
+                !isLoginPage && (
+                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full flex items-center gap-2">
+                      <LogIn className="h-4 w-4" />
+                      Login
+                    </Button>
+                  </Link>
+                )
               )}
             </nav>
           </div>

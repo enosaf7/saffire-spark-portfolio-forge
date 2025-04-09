@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
-import { Promotion, asPromotions } from '@/types/supabase';
+import { Promotion } from '@/types/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -29,7 +29,7 @@ const Promotions = () => {
           throw error;
         }
         
-        setPromotions(asPromotions(data || []));
+        setPromotions(data || []);
       } catch (error) {
         console.error('Error fetching promotions:', error);
       } finally {
@@ -59,6 +59,7 @@ const Promotions = () => {
     );
   }
 
+  // If no promotions, don't render the section at all
   if (promotions.length === 0) return null;
 
   return (

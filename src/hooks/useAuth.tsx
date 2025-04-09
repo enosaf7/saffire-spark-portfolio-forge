@@ -1,6 +1,6 @@
 
 import { useState, useEffect, createContext, useContext } from 'react';
-import { Session, User, AuthProvider } from '@supabase/supabase-js';
+import { Session, User, Provider } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User as AppUser, asUsers } from '@/types/supabase';
@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signInWithGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google' as AuthProvider,
+        provider: 'google' as Provider,
         options: {
           redirectTo: window.location.origin + '/booking'
         }
@@ -165,7 +165,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       });
       
-      return { error, phoneNumber: data?.phoneNumber };
+      // Since data.phoneNumber doesn't exist in the returned type, we extract the phone number
+      // from the input parameter to return it back
+      return { error, phoneNumber: phone };
     } catch (error) {
       return { error };
     }

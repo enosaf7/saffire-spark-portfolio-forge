@@ -79,29 +79,30 @@ export const useAuthMethods = (setHasAdminAccess: (value: boolean) => void) => {
       // If registration was successful and we have a user
       if (!error && data && data.user) {
         try {
-          // Step 2: Create a profiles entry manually - passing as an array of objects
-          const { error: profileError } = await supabase.from('profiles').insert([{
+          // Step 2: Create a profiles entry manually
+          // Format the created_at and updated_at as ISO strings
+          const { error: profileError } = await supabase.from('profiles').insert({
             id: data.user.id,
             full_name: formattedMetadata.full_name,
             university: formattedMetadata.university,
-            created_at: new Date(),
-            updated_at: new Date()
-          }]);
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
 
           if (profileError) {
             console.error('Error creating profile:', profileError);
           }
 
-          // Step 3: Create a users entry manually - passing as an array of objects
-          const { error: userError } = await supabase.from('users').insert([{
+          // Step 3: Create a users entry manually
+          const { error: userError } = await supabase.from('users').insert({
             id: data.user.id,
             email: email,
             full_name: formattedMetadata.full_name,
             university: formattedMetadata.university,
             role: 'user',
-            created_at: new Date(),
-            updated_at: new Date()
-          }]);
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
 
           if (userError) {
             console.error('Error creating user record:', userError);

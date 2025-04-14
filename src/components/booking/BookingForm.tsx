@@ -1,5 +1,5 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,7 @@ const BookingForm = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isGuest = searchParams.get('guest') === 'true';
+  const preselectedService = searchParams.get('service');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
@@ -22,7 +23,7 @@ const BookingForm = () => {
     email: '',
     university: '',
     program: '',
-    serviceType: 'cv',
+    serviceType: preselectedService || 'cv',
     tone: '',
     deadline: '',
     notes: '',
@@ -31,6 +32,16 @@ const BookingForm = () => {
   const [fileUploaded, setFileUploaded] = useState(false);
   const [fileName, setFileName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update service type if URL parameter changes
+  useEffect(() => {
+    if (preselectedService) {
+      setFormData(prevData => ({
+        ...prevData,
+        serviceType: preselectedService
+      }));
+    }
+  }, [preselectedService]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -156,19 +167,19 @@ const BookingForm = () => {
             <div className="space-y-2">
               <Label>Service Type *</Label>
               <RadioGroup 
-                defaultValue="cv"
+                value={formData.serviceType}
                 className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2"
                 onValueChange={(value) => handleSelectChange('serviceType', value)}
               >
-                <div className="flex items-center space-x-2 border rounded-md p-3 hover:border-saffire-blue cursor-pointer">
+                <div className={`flex items-center space-x-2 border rounded-md p-3 hover:border-saffire-blue cursor-pointer ${formData.serviceType === 'cv' ? 'border-saffire-blue bg-saffire-blue/5' : ''}`}>
                   <RadioGroupItem value="cv" id="cv" className="text-saffire-blue" />
                   <Label htmlFor="cv" className="cursor-pointer">CV Writing</Label>
                 </div>
-                <div className="flex items-center space-x-2 border rounded-md p-3 hover:border-saffire-blue cursor-pointer">
+                <div className={`flex items-center space-x-2 border rounded-md p-3 hover:border-saffire-blue cursor-pointer ${formData.serviceType === 'website' ? 'border-saffire-blue bg-saffire-blue/5' : ''}`}>
                   <RadioGroupItem value="website" id="website" className="text-saffire-blue" />
                   <Label htmlFor="website" className="cursor-pointer">Portfolio Website</Label>
                 </div>
-                <div className="flex items-center space-x-2 border rounded-md p-3 hover:border-saffire-blue cursor-pointer">
+                <div className={`flex items-center space-x-2 border rounded-md p-3 hover:border-saffire-blue cursor-pointer ${formData.serviceType === 'combo' ? 'border-saffire-blue bg-saffire-blue/5' : ''}`}>
                   <RadioGroupItem value="combo" id="combo" className="text-saffire-blue" />
                   <Label htmlFor="combo" className="cursor-pointer">Combo Package</Label>
                 </div>

@@ -61,18 +61,35 @@ export const useAuthMethods = (setHasAdminAccess: (value: boolean) => void) => {
 
   const signUp = async (email: string, password: string, metadata: any) => {
     try {
-      const { error } = await supabase.auth.signUp({ 
-        email, 
-        password, 
-        options: { 
+      // Ensure metadata has consistent property naming
+      const formattedMetadata = {
+        full_name: metadata.full_name || metadata.fullName,
+        university: metadata.university
+      };
+
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
           emailRedirectTo: `${window.location.origin}/login?confirmed=true`,
-          data: {
-            full_name: metadata.full_name || metadata.fullName,
-            university: metadata.university,
-            ...metadata
-          }
-        } 
+          data: formattedMetadata
+        }
       });
+
+      if (!error) {
+        // Try to create a profiles entry (this is a backup in case the trigger doesn't work)
+        try {
+          await supabase.from('profiles').upsert({
+            id: (await supabase.auth.getUser()).data.user?.id,
+            full_name: formattedMetadata.full_name,
+            university: formattedMetadata.university,
+          });
+        } catch (profileError) {
+          console.error('Error creating profile:', profileError);
+          // We don't return this error as the auth signup was successful
+        }
+      }
+      
       return { error };
     } catch (error) {
       return { error };

@@ -16,7 +16,8 @@ const serviceData = [
       'Industry-Specific Keywords',
       'Highlight Academic Achievements',
       'Custom Design Options'
-    ]
+    ],
+    value: 'cv'
   },
   {
     id: 2,
@@ -28,7 +29,8 @@ const serviceData = [
       'Project Showcase',
       'Social Media Integration',
       'SEO Optimization'
-    ]
+    ],
+    value: 'website'
   },
   {
     id: 3,
@@ -40,7 +42,8 @@ const serviceData = [
       'CV Integration in Website',
       'Premium Design Options',
       'Extended Support'
-    ]
+    ],
+    value: 'combo'
   }
 ];
 
@@ -113,7 +116,7 @@ const Services = () => {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Link to="/booking" className="w-full">
+                <Link to={`/booking?service=${service.value}`} className="w-full">
                   <Button className="w-full bg-saffire-purple hover:bg-saffire-purple/90">
                     Book Now
                   </Button>

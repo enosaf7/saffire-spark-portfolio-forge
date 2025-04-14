@@ -67,26 +67,47 @@ export const useAuthMethods = (setHasAdminAccess: (value: boolean) => void) => {
         university: metadata.university
       };
 
-      const { error } = await supabase.auth.signUp({
+      // Step 1: Register the user with Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/login?confirmed=true`,
           data: formattedMetadata
         }
       });
 
-      if (!error) {
-        // Try to create a profiles entry (this is a backup in case the trigger doesn't work)
+      // If registration was successful and we have a user
+      if (!error && data && data.user) {
         try {
-          await supabase.from('profiles').upsert({
-            id: (await supabase.auth.getUser()).data.user?.id,
+          // Step 2: Create a profiles entry manually
+          const { error: profileError } = await supabase.from('profiles').insert({
+            id: data.user.id,
             full_name: formattedMetadata.full_name,
             university: formattedMetadata.university,
+            created_at: new Date(),
+            updated_at: new Date()
           });
-        } catch (profileError) {
-          console.error('Error creating profile:', profileError);
-          // We don't return this error as the auth signup was successful
+
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
+
+          // Step 3: Create a users entry manually
+          const { error: userError } = await supabase.from('users').insert({
+            id: data.user.id,
+            email: email,
+            full_name: formattedMetadata.full_name,
+            university: formattedMetadata.university,
+            role: 'user',
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+
+          if (userError) {
+            console.error('Error creating user record:', userError);
+          }
+        } catch (insertError) {
+          console.error('Error creating user records:', insertError);
         }
       }
       
